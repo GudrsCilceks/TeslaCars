@@ -1,6 +1,15 @@
 using Microsoft.Data.Sqlite;
 using System;
 
+
+
+
+
+
+
+
+
+
 class Program
 {
     static void Main(string[] args)
@@ -54,6 +63,7 @@ class Program
         }
     }
 }
+
 public class RentalController
 {
     private readonly string _connectionString;
@@ -62,6 +72,7 @@ public class RentalController
         _connectionString = connectionString;
         CreateTables();
     }
+	
     private void CreateTables()
     {
         using var connection = new SqliteConnection(_connectionString);
@@ -70,7 +81,7 @@ public class RentalController
 			Id INTEGER PRIMARY KEY AUTOINCREMENT, 
 			Model nvarchar(100) NOT NULL, 
 			HourlyRate decimal(18,2) NOT NULL, 
-			KmRate decimal(18,2) NOT NULL);
+			kmrate decimal(18,2) NOT NULL);
             CREATE TABLE IF NOT EXISTS Clients (
 				Id INTEGER PRIMARY KEY AUTOINCREMENT,
 				Name nvarchar(100) NOT NULL, 
@@ -89,6 +100,7 @@ public class RentalController
         command.CommandText = tableCreationQuery;
         command.ExecuteNonQuery();
     }
+	
     public void AddCar()
     {
         Console.Write("Enter car model: ");
@@ -100,7 +112,7 @@ public class RentalController
             return;
         }
         Console.Write("Enter kilometer rate (EUR/km): ");
-        if (!double.TryParse(Console.ReadLine(), out double kmRate))
+        if (!double.TryParse(Console.ReadLine(), out double kmrate))
         {
             Console.WriteLine("Invalid kilometer rate.");
             return;
@@ -108,10 +120,10 @@ public class RentalController
         using var connection = new SqliteConnection(_connectionString);
         connection.Open();
         using var command = connection.CreateCommand();
-        command.CommandText = "INSERT INTO Cars (Model, HourlyRate, KmRate) VALUES (@model, @hourlyRate, @kmRate); select last_insert_rowid() AS ID";
+        command.CommandText = "INSERT INTO Cars (Model, HourlyRate, kmrate) VALUES (@model, @hourlyRate, @kmrate); select last_insert_rowid() AS ID";
         command.Parameters.AddWithValue("@model", model);
         command.Parameters.AddWithValue("@hourlyRate", hourlyRate);
-        command.Parameters.AddWithValue("@kmRate", kmRate);
+        command.Parameters.AddWithValue("@kmrate", kmrate);
         var id=command.ExecuteScalar();
         Console.WriteLine(string.Format("Car '{1}' added successfully with Id={0}.",id,model));
     }
@@ -122,7 +134,7 @@ public class RentalController
         using (var connection = new SqliteConnection(_connectionString)){
 			connection.Open();
 			using var command = connection.CreateCommand();
-			command.CommandText = "select Id, Model, HourlyRate, KmRate from Cars order by Id ";        
+			command.CommandText = "select Id, Model, HourlyRate, kmrate from Cars order by Id ";        
 
 
 			 Console.WriteLine("Cars in DB: ");
@@ -130,16 +142,17 @@ public class RentalController
 			using( var lasitajs=command.ExecuteReader()){
 				while (lasitajs.Read()){
 					n++;
-					 Console.WriteLine(string.Format("Id ={0}, Model='{1}', HourlyRate={2}, KmRate={3}",
+					 Console.WriteLine(string.Format("Id ={0}, Model='{1}', HourlyRate={2}, kmrate={3}",
 													 Convert.ToInt32(lasitajs["Id"]), 
 													 Convert.ToString(lasitajs["Model"]),
 													 Convert.ToDouble(lasitajs["HourlyRate"]),
-													 Convert.ToDouble(lasitajs["KmRate"])));
+													 Convert.ToDouble(lasitajs["kmrate"])));
 				}
 			}
 			Console.WriteLine(string.Format("Total {0} cars",n));
 		}        
     }
+	
     public void AddClient()
     {
         Console.Write("Enter client name: ");
@@ -260,6 +273,7 @@ public class RentalController
         Console.WriteLine(string.Format("Car rented successfully. Id={0}.",id));
       
     }
+	
     public void CalculatePayment()
     {
         Console.Write("Enter rental ID: ");
@@ -286,7 +300,7 @@ public class RentalController
         }
         using var connection = new SqliteConnection(_connectionString);
         connection.Open();
-        string selectQuery = @"SELECT R.StartTime, C.HourlyRate, C.KmRate FROM Rentals R JOIN Cars C ON R.CarId = C.Id WHERE R.Id = @rentalId";
+        string selectQuery = @"SELECT R.StartTime, C.HourlyRate, C.kmrate FROM Rentals R JOIN Cars C ON R.CarId = C.Id WHERE R.Id = @rentalId";
         using var selectCommand = connection.CreateCommand();
         selectCommand.CommandText = selectQuery;
         selectCommand.Parameters.AddWithValue("@rentalId", rentalId);
@@ -296,10 +310,10 @@ public class RentalController
             DateTime startTime = DateTime.Parse(reader["StartTime"].ToString());
             
             double hourlyRate = Convert.ToDouble(reader["HourlyRate"]);
-            double kmRate = Convert.ToDouble(reader["KmRate"]);
+            double kmrate = Convert.ToDouble(reader["kmrate"]);
 			System.TimeSpan laiks=endTime - startTime;
             double hours =laiks.TotalHours;
-            double payment = (hours * hourlyRate) + (kmDriven * kmRate);
+            double payment = (hours * hourlyRate) + (kmDriven * kmrate);
             string updateQuery = @"UPDATE Rentals SET EndTime = @endTime, KmDriven = @kmDriven, Payment = @payment WHERE Id = @rentalId";
             using var updateCommand = connection.CreateCommand();
             updateCommand.CommandText = updateQuery;
